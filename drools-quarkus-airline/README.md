@@ -83,7 +83,7 @@ Update `src/main/resources/application.properties`:
 quarkus.http.port=8080
 
 # LLM API Client
-quarkus.rest-client.maas-client.url=https://llama-3-2-3b-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com
+quarkus.rest-client.maas-client.url=<YOUR LLM URL HOSTED SOMEWHERE>
 quarkus.rest-client.maas-client.scope=jakarta.inject.Singleton
 
 # Add your API key/bearer token

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flight Compensation Chatbot - REST</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            width: 400px;
+            height: 600px; /* Fixed height for the container */
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .top-bar {
+            background-color: #28a745;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        h1 {
+            color: white;
+            margin: 0;
+            font-size: 18px;
+        }
+        .version-link {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 5px 10px;
+            border: 1px solid white;
+            border-radius: 4px;
+        }
+        .version-link:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        #chat-output {
+            flex: 1; /* Takes available space */
+            min-height: 0; /* Allow flex shrinking */
+            padding: 15px;
+            border: none;
+            resize: none;
+            font-size: 14px;
+            line-height: 1.5;
+            background-color: #f9f9f9;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .chat-input-area {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        #chat-input {
+            flex-grow: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 14px;
+            resize: none;
+            height: 60px; /* Fixed height for input */
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+            align-self: flex-end; /* Align button to bottom */
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="top-bar">
+            <h1>Flight Compensation Chatbot (REST)</h1>
+            <a href="/" class="version-link">Use WebSocket Version</a>
+        </div>
+        <textarea id="chat-output" readonly>Welcome! How can I help you today?
+
+</textarea>
+        <div class="chat-input-area">
+            <textarea id="chat-input" placeholder="Type your message here..."></textarea>
+            <button id="send-button" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    <script>
+        const outputArea = document.getElementById('chat-output');
+        const sendButton = document.getElementById('send-button');
+        const inputArea = document.getElementById('chat-input');
+        const BACKEND_URL = 'http://drools-quarkus-airline-default.apps.cluster-v4sj7.dynamic.redhatworkshops.io/chat';
+
+        async function sendMessage() {
+            const input = inputArea.value.trim();
+            if (!input) return;
+            
+            outputArea.value += 'You: ' + input + '\n';
+            inputArea.value = '';
+            
+            sendButton.disabled = true;
+            sendButton.textContent = 'Sending...';
+            
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain'
+                    },
+                    body: input
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Server returned ' + response.status);
+                }
+                
+                const botResponse = await response.text();
+                outputArea.value += 'Bot: ' + botResponse + '\n\n';
+                outputArea.scrollTop = outputArea.scrollHeight;
+                
+            } catch (error) {
+                outputArea.value += 'Error: ' + error.message + '\n\n';
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+                inputArea.focus();
+            }
+        }
+        
+        inputArea.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        inputArea.focus();
+    </script>
+</body>
+</html>

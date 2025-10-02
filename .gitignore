@@ -1,0 +1,26 @@
+# Java/Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/
+mvnw
+mvnw.cmd
+
+# Quarkus
+.quarkus/
+
+# Node/NPM
+node_modules/
+package-lock.json
+npm-debug.log
+
+# IDE
+.vscode/
+.idea/
+*.iml
+.DS_Store
+
+# Logs
+*.log

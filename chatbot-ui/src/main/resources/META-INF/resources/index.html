@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flight Compensation Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            width: 400px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .top-bar {
+            background-color: #007bff;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 {
+            color: white;
+            margin: 0;
+            font-size: 18px;
+        }
+        .version-link {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 5px 10px;
+            border: 1px solid white;
+            border-radius: 4px;
+        }
+        .version-link:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-connected {
+            background-color: #28a745;
+        }
+        .status-disconnected {
+            background-color: #dc3545;
+        }
+        #chat-output {
+            flex-grow: 1;
+            padding: 15px;
+            border: none;
+            resize: none;
+            font-size: 14px;
+            line-height: 1.5;
+            background-color: #f9f9f9;
+            overflow-y: auto;
+        }
+        .chat-input-area {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+        }
+        #chat-input {
+            flex-grow: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 14px;
+            resize: none;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="top-bar">
+            <h1>
+                <span id="status-indicator" class="status-indicator status-disconnected"></span>
+                Flight Compensation Chatbot (WebSocket)
+            </h1>
+            <a href="/rest.html" class="version-link">Use REST Version</a>
+        </div>
+        <textarea id="chat-output" rows="15" readonly>Connecting to chat server...\n</textarea>
+        <div class="chat-input-area">
+            <textarea id="chat-input" rows="3" placeholder="Type your message here..."></textarea>
+            <button id="send-button" onclick="sendMessage()" disabled>Send</button>
+        </div>
+    </div>
+   <script>
+    let socket;
+    const outputArea = document.getElementById('chat-output');
+    const sendButton = document.getElementById('send-button');
+    const inputArea = document.getElementById('chat-input');
+    const statusIndicator = document.getElementById('status-indicator');
+    const BACKEND_HOST = 'drools-quarkus-airline-default.apps.cluster-v4sj7.dynamic.redhatworkshops.io';
+
+    let messageBuffer = '';
+    let isBotResponding = false;
+
+    function connectWebSocket() {
+        const url = 'ws://' + BACKEND_HOST + '/websocket-chat';
+        console.log('Connecting to WebSocket at: ' + url);
+        
+        socket = new WebSocket(url);
+
+        socket.onopen = function(event) {
+            console.log('WebSocket connected:', event);
+            outputArea.value = 'Welcome! How can I help you today?\n\n';
+            sendButton.disabled = false;
+            statusIndicator.className = 'status-indicator status-connected';
+            inputArea.focus();
+        };
+
+        socket.onmessage = function(event) {
+            const data = event.data;
+            
+            if (data.startsWith('Bot: ')) {
+                // A new bot message is starting.
+                messageBuffer = data.substring(5); // Start the buffer with the rest of the string
+                isBotResponding = true;
+                outputArea.value += 'Bot: ' + messageBuffer;
+            } else if (isBotResponding) {
+                // This is a continuation of a bot message
+                messageBuffer += data;
+                const lastBotMessageStart = outputArea.value.lastIndexOf('Bot: ');
+                if (lastBotMessageStart !== -1) {
+                    outputArea.value = outputArea.value.substring(0, lastBotMessageStart + 5) + messageBuffer;
+                }
+            } else {
+                // A new bot message is starting without a prefix.
+                // This is a fallback case.
+                messageBuffer = data;
+                isBotResponding = true;
+                outputArea.value += 'Bot: ' + messageBuffer;
+            }
+
+            outputArea.scrollTop = outputArea.scrollHeight;
+            sendButton.disabled = false;
+            sendButton.textContent = 'Send';
+        };
+
+        socket.onclose = function(event) {
+            console.log('WebSocket closed:', event);
+            outputArea.value += 'Connection closed. Attempting to reconnect...\n';
+            sendButton.disabled = true;
+            statusIndicator.className = 'status-indicator status-disconnected';
+            setTimeout(connectWebSocket, 3000);
+        };
+
+        socket.onerror = function(event) {
+            console.error('WebSocket error:', event);
+            outputArea.value += 'Connection error!\n';
+            statusIndicator.className = 'status-indicator status-disconnected';
+        };
+    }
+
+    function sendMessage() {
+        const input = inputArea.value.trim();
+        if (!input || !socket || socket.readyState !== WebSocket.OPEN) return;
+        
+        outputArea.value += 'You: ' + input + '\n';
+        socket.send(input);
+        inputArea.value = '';
+        
+        sendButton.disabled = true;
+        sendButton.textContent = 'Sending...';
+        isBotResponding = false; // Reset the flag for a new bot response
+    }
+
+    inputArea.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    connectWebSocket();
+</script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+package org.acme;
+
+import org.acme.FlightIssue;
+
+/**
+ * Rule: Delay Compensation - Basic Tier
+ * Description: Provides $50 compensation for basic tier customers with delays over 2 hours
+ */
+rule "Delay Compensation - Basic"
+    salience 100
+when
+    $issue: FlightIssue(
+        issueType == "delay",
+        issueDuration > 2,
+        customerLoyaltyStatus == "basic"
+    )
+then
+    System.out.println("[RULE] Delay Compensation - Basic tier: $50 for flight " + $issue.getFlightNumber());
+    $issue.setApprovedCompensation(50.0);
+    update($issue);
+end
+
+/**
+ * Rule: Delay Compensation - Silver Tier
+ * Description: Provides $100 compensation for silver tier customers with delays over 2 hours
+ */
+rule "Delay Compensation - Silver"
+    salience 100
+when
+    $issue: FlightIssue(
+        issueType == "delay",
+        issueDuration > 2,
+        customerLoyaltyStatus == "silver"
+    )
+then
+    System.out.println("[RULE] Delay Compensation - Silver tier: $100 for flight " + $issue.getFlightNumber());
+    $issue.setApprovedCompensation(100.0);
+    update($issue);
+end
+
+/**
+ * Rule: Delay Compensation - Gold Tier
+ * Description: Provides $150 compensation for gold tier customers with delays over 2 hours
+ */
+rule "Delay Compensation - Gold"
+    salience 100
+when
+    $issue: FlightIssue(
+        issueType == "delay",
+        issueDuration > 2,
+        customerLoyaltyStatus == "gold"
+    )
+then
+    System.out.println("[RULE] Delay Compensation - Gold tier: $150 for flight " + $issue.getFlightNumber());
+    $issue.setApprovedCompensation(150.0);
+    update($issue);
+end
+
+/**
+ * Rule: Cancellation Compensation - Under Cap
+ * Description: For cancellations where requested amount is under $200, approve the full amount
+ */
+rule "Cancellation Compensation - Under Cap"
+    salience 100
+when
+    $issue: FlightIssue(
+        issueType == "cancellation",
+        customerCompensation <= 200.0
+    )
+then
+    System.out.println("[RULE] Cancellation Under Cap - Approved: $" + $issue.getCustomerCompensation() + 
+                       " for flight " + $issue.getFlightNumber());
+    $issue.setApprovedCompensation($issue.getCustomerCompensation());
+    update($issue);
+end
+
+/**
+ * Rule: Cancellation Compensation - Over Cap
+ * Description: For cancellations where requested amount exceeds $200, cap at $200
+ */
+rule "Cancellation Compensation - Over Cap"
+    salience 100
+when
+    $issue: FlightIssue(
+        issueType == "cancellation",
+        customerCompensation > 200.0
+    )
+then
+    System.out.println("[RULE] Cancellation Over Cap - Requested: $" + $issue.getCustomerCompensation() + 
+                       ", Capped at: $200 for flight " + $issue.getFlightNumber());
+    $issue.setApprovedCompensation(200.0);
+    update($issue);
+end
+
+/**
+ * Rule: Voucher for Minor Issues
+ * Description: Delays of 2 hours or less do not qualify for compensation
+ * Sets compensation to $0 for these minor delays
+ */
+rule "Voucher for Minor Issues"
+    salience 100
+when
+    $issue: FlightIssue(
+        issueType == "delay",
+        issueDuration <= 2
+    )
+then
+    System.out.println("[RULE] Minor Delay - No compensation (delay <= 2 hours) for flight " + $issue.getFlightNumber());
+    $issue.setApprovedCompensation(0.0);
+    update($issue);
+end
+
+/**
+ * Rule: Luggage Issues - Basic Tier
+ * Description: Provides $75 compensation for basic tier customers with luggage issues
+ */
+rule "Luggage Issues - Basic"
+    salience 100
+when
+    $issue: FlightIssue(
+        issueType == "luggage issues",
+        customerLoyaltyStatus == "basic"
+    )
+then
+    System.out.println("[RULE] Luggage Issues - Basic tier: $75 for flight " + $issue.getFlightNumber());
+    $issue.setApprovedCompensation(75.0);
+    update($issue);
+end
+
+/**
+ * Rule: Luggage Issues - Silver Tier
+ * Description: Provides $125 compensation for silver tier customers with luggage issues
+ */
+rule "Luggage Issues - Silver"
+    salience 100
+when
+    $issue: FlightIssue(
+        issueType == "luggage issues",
+        customerLoyaltyStatus == "silver"
+    )
+then
+    System.out.println("[RULE] Luggage Issues - Silver tier: $125 for flight " + $issue.getFlightNumber());
+    $issue.setApprovedCompensation(125.0);
+    update($issue);
+end
+
+/**
+ * Rule: Luggage Issues - Gold Tier
+ * Description: Provides $200 compensation for gold tier customers with luggage issues
+ */
+rule "Luggage Issues - Gold"
+    salience 100
+when
+    $issue: FlightIssue(
+        issueType == "luggage issues",
+        customerLoyaltyStatus == "gold"
+    )
+then
+    System.out.println("[RULE] Luggage Issues - Gold tier: $200 for flight " + $issue.getFlightNumber());
+    $issue.setApprovedCompensation(200.0);
+    update($issue);
+end
+
+/**
+ * Rule: Loyalty Benefits for Frequent Flyers
+ * Description: Gold tier customers get an additional $50 bonus for cancellations
+ * This rule runs AFTER the Cancellation Compensation rules (lower salience)
+ */
+rule "Loyalty Benefits for Frequent Flyers"
+    salience 50
+when
+    $issue: FlightIssue(
+        customerLoyaltyStatus == "gold",
+        issueType == "cancellation",
+        approvedCompensation > 0
+    )
+then
+    double newCompensation = $issue.getApprovedCompensation() + 50.0;
+    System.out.println("[RULE] Gold Loyalty Bonus - Adding $50, New total: $" + 
+                       newCompensation + " for flight " + $issue.getFlightNumber());
+    $issue.setApprovedCompensation(newCompensation);
+    update($issue);
+end
+
+/**
+ * Rule: Hard Compensation Cap
+ * Description: Absolute maximum compensation is $500 regardless of other rules
+ * This acts as a safety net to prevent excessive payouts (lowest salience = runs last)
+ */
+rule "Hard Compensation Cap"
+    salience 10
+when
+    $issue: FlightIssue(approvedCompensation > 500.0)
+then
+    System.out.println("[RULE] Hard Cap - Reducing from $" + $issue.getApprovedCompensation() + 
+                       " to $500 for flight " + $issue.getFlightNumber());
+    $issue.setApprovedCompensation(500.0);
+    update($issue);
+end

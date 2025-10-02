@@ -134,7 +134,7 @@ All compensations subject to $500 hard cap.
 ### Prerequisites
 - Java 21+
 - Maven 3.8+
-- Node.js (for local frontend development)
+- OpenShift CLI (`oc`)
 - Access to Llama 3.2 3B API endpoint
 
 ### Build & Run Backend

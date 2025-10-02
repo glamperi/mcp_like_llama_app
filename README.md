@@ -138,19 +138,12 @@ All compensations subject to $500 hard cap.
 - Access to Llama 3.2 3B API endpoint
 
 ### Build & Run Backend
-```bash
-cd drools-quarkus-airline
-./mvnw clean package
-./mvnw quarkus:dev
-```
+[drools-quarkus-airline/README.md](drools-quarkus-airline/README.md)
 
-### Run Frontend
-```bash
-cd chatbot-ui
-# Serve with any HTTP server, e.g.:
-python3 -m http.server 8080
-# Open http://localhost:8080
-```
+
+### Build & Run Frontend
+[chatbot-ui/README.md](chatbot-ui/README.md)
+
 
 ## Configuration
 

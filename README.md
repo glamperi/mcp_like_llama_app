@@ -59,7 +59,7 @@ graph TB
     style TR fill:#e1f5e1
     style COMP fill:#fff3cd
     style MISTRAL fill:#d1ecf1```
-```
+
 
 ## Three Core Components
 

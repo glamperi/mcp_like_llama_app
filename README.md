@@ -6,54 +6,58 @@ An intelligent airline customer service chatbot demonstrating how native functio
 
 ```mermaid
 graph TB
-    subgraph "Frontend"
+    subgraph Frontend["Frontend"]
         UI[Web UI<br/>index.html]
-        WS[WebSocket Client<br/>wss://.../*websocket-chat]
+        WS[WebSocket Client<br/>wss://websocket-chat]
     end
 
-    subgraph "OpenShift Route Layer"
-        Route[OpenShift Route<br/>drools-quarkus-airline-mistral...]
+    subgraph Route["OpenShift Route Layer"]
+        R[OpenShift Route<br/>drools-quarkus-airline-mistral]
     end
 
-    subgraph "Backend Application Pod"
-        subgraph "API Layer"
+    subgraph Backend["Backend Application Pod"]
+        subgraph API["API Layer"]
             WSR[WebSocketChatResource<br/>@WebSocket]
             REST[ChatRestResource<br/>@Path /chat]
         end
 
-        subgraph "Tool Discovery & Registry"
+        subgraph Registry["Tool Discovery & Registry"]
             TR[ToolRegistry<br/>@ApplicationScoped]
-            TR -->|Scans @Tool<br/>annotations| COMP
-            TR -->|Auto-generates<br/>function definitions| TOOLDEF[Tool Definitions]
-            TR -->|Invokes via<br/>reflection| COMP
+            TOOLDEF[Tool Definitions]
         end
 
-        subgraph "Business Logic"
-            COMP[FlighCompensationEndPoint<br/>@Tool annotation<br/>@ToolArg parameters]
+        subgraph Logic["Business Logic"]
+            COMP[FlightCompensationEndPoint<br/>@Tool annotation]
             DROOLS[Drools Rules Engine<br/>KieSession]
-            COMP -->|Creates KieSession| DROOLS
-            DROOLS -->|Evaluates| RULES[compensation.drl<br/>Business Rules]
+            RULES[compensation.drl<br/>Business Rules]
         end
 
-        subgraph "External LLM Integration"
+        subgraph LLM["External LLM Integration"]
             CLIENT[MaasClient<br/>@RestClient]
         end
     end
 
-    subgraph "External Services"
+    subgraph External["External Services"]
         MISTRAL[Mistral AI API<br/>mistral-large-latest]
     end
 
     UI -->|User messages| WS
-    WS -->|WebSocket| Route
-    Route --> WSR
+    WS -->|WebSocket| R
+    R --> WSR
     
     WSR -->|Gets tools from| TR
+    TR -->|Scans @Tool annotations| COMP
+    TR -->|Auto-generates definitions| TOOLDEF
+    TR -->|Invokes via reflection| COMP
+    
     WSR -->|1. Messages + Tools| CLIENT
     CLIENT -->|HTTP POST| MISTRAL
     MISTRAL -->|Structured tool_calls| CLIENT
+    CLIENT -->|2. Returns tool_calls| WSR
     WSR -->|3. Invoke tool| TR
-    TR -->|Reflection call| COMP
+    
+    COMP -->|Creates KieSession| DROOLS
+    DROOLS -->|Evaluates| RULES
     
     style TR fill:#e1f5e1
     style COMP fill:#fff3cd

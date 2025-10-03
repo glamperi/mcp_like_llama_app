@@ -12,7 +12,6 @@ This application demonstrates an MCP-like (Model Context Protocol) architecture 
 
 ### System Architecture Diagram
 
-```mermaid
 %%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#fff','primaryTextColor':'#000','primaryBorderColor':'#666','lineColor':'#666','secondaryColor':'#fff','tertiaryColor':'#fff','background':'#fff','mainBkg':'#fff','secondBkg':'#fff','clusterBkg':'#f9f9f9','clusterBorder':'#999','edgeLabelBackground':'#fff'}}}%%
 graph LR
     subgraph Frontend["🖥️ Frontend Apps"]
@@ -70,18 +69,7 @@ graph LR
     
     style Frontend fill:#f9f9f9,stroke:#666,stroke-width:2px,color:#000
     style Backend fill:#f9f9f9,stroke:#666,stroke-width:2px,color:#000
-```
 
-**Color Legend:**
-- 🔵 **Light Blue** = Frontend user interfaces
-- 🟢 **Light Green** = Backend endpoints and Drools execution engine
-- 🔴 **Light Red/Coral** = Data extraction (regex) and external LLM service
-- 🟡 **Light Yellow** = State management and data storage
-- 🟣 **Light Purple** = MCP-like tool endpoint (Drools bridge)
-
-## Project Structure
-
-```
 mcp_like_llama_app/
 ├── chatbot-ui/              # Frontend chat interface
 │   ├── index.html           # WebSocket-based chat UI

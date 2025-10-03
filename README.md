@@ -14,98 +14,62 @@ This application demonstrates an MCP-like (Model Context Protocol) architecture 
 
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#fff','primaryTextColor':'#000','primaryBorderColor':'#666','lineColor':'#666','secondaryColor':'#fff','tertiaryColor':'#fff','background':'#fff','mainBkg':'#fff','secondBkg':'#fff','clusterBkg':'#f9f9f9','clusterBorder':'#999','edgeLabelBackground':'#fff'}}}%%
-graph TB
-    subgraph "Frontend"
-        UI[Web UI<br/>index.html]
-        WS[WebSocket Client<br/>wss://.../*websocket-chat]
+graph LR
+    subgraph Frontend["🖥️ Frontend Apps"]
+        WS_UI["WebSocket Chat UI<br/>index.html + script.js"]
+        REST_UI["REST Chat UI<br/>index-rest.html"]
     end
 
-    subgraph "OpenShift Route Layer"
-        Route[OpenShift Route<br/>drools-quarkus-airline-mistral...]
+    subgraph Backend["⚙️ Quarkus Backend"]
+        WSR["WebSocketChatResource<br/>@WebSocket /websocket-chat"]
+        RR["ChatRestResource<br/>@Path /chat"]
+        
+        CS["CompensationState<br/>flightNumber, issueType<br/>issueDuration, compensation<br/>loyaltyStatus, inClaimMode"]
+        
+        RE["Regex Extractors<br/>Flight: [A-Z]{2}\d{2,4}<br/>Duration: \d+ hours<br/>Amount: $\d+<br/>Loyalty: gold/silver/basic"]
+        
+        MC["MaasClient<br/>LLM API<br/>llama-3-2-3b"]
+        
+        FE["FlighCompensationEndPoint<br/>@Tool MCP-like"]
+        
+        KS["KieSession<br/>Drools Runtime"]
+        
+        RULES["rules.drl<br/>Delay/Cancellation/Luggage<br/>Loyalty bonuses<br/>$500 Hard cap"]
     end
 
-    subgraph "Backend Application Pod"
-        subgraph "API Layer"
-            WSR[WebSocketChatResource<br/>@WebSocket]
-            REST[ChatRestResource<br/>@Path /chat]
-        end
-
-        subgraph "Tool Discovery & Registry"
-            TR[ToolRegistry<br/>@ApplicationScoped]
-            TR -->|Scans @Tool<br/>annotations| COMP
-            TR -->|Auto-generates<br/>MaasRequest.Tool| TOOLDEF[Tool Definitions]
-            TR -->|Invokes via<br/>reflection| COMP
-        end
-
-        subgraph "Business Logic"
-            COMP[FlighCompensationEndPoint<br/>@Tool annotation<br/>@ToolArg parameters]
-            DROOLS[Drools Rules Engine<br/>KieSession]
-            COMP -->|Creates KieSession| DROOLS
-            DROOLS -->|Evaluates| RULES[compensation.drl<br/>Business Rules]
-        end
-
-        subgraph "External LLM Integration"
-            CLIENT[MaasClient<br/>@RestClient]
-            REQ[MaasChatRequest<br/>messages + tools]
-            RESP[MaasChatResponse<br/>tool_calls]
-        end
-    end
-
-    subgraph "External Services"
-        MISTRAL[Mistral AI API<br/>mistral-large-latest]
-    end
-
-    subgraph "Logging"
-        LOGFILE[/deployments/<br/>flight-quarkus.log]
-    end
-
-    UI -->|User messages| WS
-    WS -->|WebSocket<br/>connection| Route
-    Route --> WSR
-    UI -->|HTTP POST| Route
-    Route --> REST
-
-    WSR -->|Gets tools from| TR
-    REST -->|Gets tools from| TR
+    WS_UI -.WebSocket.-> WSR
+    REST_UI -.HTTP POST.-> RR
     
-    WSR -->|1. Send messages<br/>+ tool definitions| CLIENT
-    REST -->|1. Send messages<br/>+ tool definitions| CLIENT
+    WSR --> CS
+    RR --> CS
     
-    CLIENT -->|HTTP POST<br/>with tools array| MISTRAL
-    MISTRAL -->|Response with<br/>tool_calls| CLIENT
+    WSR --> RE
+    RR --> RE
     
-    CLIENT -->|2. Returns response| WSR
-    CLIENT -->|2. Returns response| REST
+    WSR -.LLM Chat.-> MC
+    RR -.LLM Chat.-> MC
     
-    WSR -->|3. If tool_calls present<br/>invoke via registry| TR
-    REST -->|3. If tool_calls present<br/>invoke via registry| TR
+    WSR ==>|hasAllRequiredData| FE
+    RR ==>|hasAllRequiredData| FE
     
-    TR -->|Reflection call| COMP
-    COMP -->|Returns result| TR
-    TR -->|Tool result| WSR
-    TR -->|Tool result| REST
+    FE --> KS
+    KS --> RULES
+    RULES ==>|Approved $| KS
+    KS ==> FE
     
-    WSR -->|4. Send tool result<br/>back to LLM| CLIENT
-    REST -->|4. Send tool result<br/>back to LLM| CLIENT
+    style WS_UI fill:#A5D6FF,stroke:#333,stroke-width:2px,color:#000
+    style REST_UI fill:#A5D6FF,stroke:#333,stroke-width:2px,color:#000
+    style WSR fill:#90EE90,stroke:#333,stroke-width:2px,color:#000
+    style RR fill:#90EE90,stroke:#333,stroke-width:2px,color:#000
+    style CS fill:#FFE680,stroke:#333,stroke-width:2px,color:#000
+    style RE fill:#FFB3B3,stroke:#333,stroke-width:2px,color:#000
+    style FE fill:#DDA0DD,stroke:#333,stroke-width:2px,color:#000
+    style KS fill:#90EE90,stroke:#333,stroke-width:2px,color:#000
+    style RULES fill:#98FB98,stroke:#333,stroke-width:2px,color:#000
+    style MC fill:#FFB3B3,stroke:#333,stroke-width:2px,color:#000
     
-    MISTRAL -->|Final response| CLIENT
-    CLIENT -->|Final answer| WSR
-    CLIENT -->|Final answer| REST
-    
-    WSR -->|Response| WS
-    REST -->|JSON Response| UI
-    WS -->|Display| UI
-
-    WSR -.->|LOG.error()| LOGFILE
-    REST -.->|LOG.error()| LOGFILE
-    TR -.->|LOG.info()| LOGFILE
-    COMP -.->|LOG.info()| LOGFILE
-
-    style TR fill:#e1f5e1
-    style TOOLDEF fill:#e1f5e1
-    style COMP fill:#fff3cd
-    style LOGFILE fill:#f8d7da
-    style MISTRAL fill:#d1ecf1
+    style Frontend fill:#f9f9f9,stroke:#666,stroke-width:2px,color:#000
+    style Backend fill:#f9f9f9,stroke:#666,stroke-width:2px,color:#000
 ```
 
 mcp_like_llama_app/

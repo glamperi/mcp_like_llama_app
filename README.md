@@ -1,4 +1,3 @@
-```
 # Flight Compensation Chatbot with Drools & Mistral AI
 
 An intelligent airline customer service chatbot demonstrating how native function calling in modern LLMs eliminates complex parsing logic and enables clean, MCP-compatible tool definitions.
@@ -58,7 +57,7 @@ graph TB
     
     style TR fill:#e1f5e1
     style COMP fill:#fff3cd
-    style MISTRAL fill:#d1ecf1```
+    style MISTRAL fill:#d1ecf1
 ```
 
 ## Three Core Components
@@ -786,6 +785,3 @@ The key insight: **When LLMs return structured function calls instead of text to
 ## Support
 
 For issues, open a GitHub issue or contact [your-email@example.com]
-```
-
-Copy all of that text, create a new file called `README.md` in your project root, paste it, and save it.

@@ -121,13 +121,14 @@
     const sendButton = document.getElementById('send-button');
     const inputArea = document.getElementById('chat-input');
     const statusIndicator = document.getElementById('status-indicator');
-    const BACKEND_HOST = 'drools-quarkus-airline-default.apps.cluster-v4sj7.dynamic.redhatworkshops.io';
+                          
+    const BACKEND_HOST = 'drools-quarkus-airline-mistral.apps.cluster-v4sj7.dynamic.redhatworkshops.io';
 
     let messageBuffer = '';
     let isBotResponding = false;
 
     function connectWebSocket() {
-        const url = 'ws://' + BACKEND_HOST + '/websocket-chat';
+        const url = 'wss://' + BACKEND_HOST + '/websocket-chat';
         console.log('Connecting to WebSocket at: ' + url);
         
         socket = new WebSocket(url);

@@ -1,6 +1,4 @@
-]I apologize for the confusion - I provided the content in my previous message, but I didn't create it as a downloadable artifact. Let me create it now as a proper markdown file that you can download:
-
-<artifact identifier="readme-md-file" type="text/markdown" title="README.md">
+```
 # Flight Compensation Chatbot with Drools & Mistral AI
 
 An intelligent airline customer service chatbot demonstrating how native function calling in modern LLMs eliminates complex parsing logic and enables clean, MCP-compatible tool definitions.
@@ -63,7 +61,6 @@ graph TB
     style MISTRAL fill:#d1ecf1
 ```
 
-<<<<<<< HEAD
 ## Three Core Components
 
 ### 1. Frontend (Web UI)
@@ -628,24 +625,6 @@ drools-quarkus-airline/
 │   ├── META-INF/resources/index.html      # Frontend UI
 │   └── application.properties             # Configuration
 └── pom.xml                                # Dependencies
-=======
-mcp_like_llama_app/
-├── chatbot-ui/              # Frontend chat interface
-│   ├── index.html           # WebSocket-based chat UI
-│   ├── index-rest.html      # REST-based chat UI  
-│   └── script.js            # WebSocket client logic
-│
-└── drools-quarkus-airline/  # Backend Quarkus application
-    ├── src/main/java/org/acme/
-    │   ├── WebSocketChatResource.java    # WebSocket endpoint
-    │   ├── ChatRestResource.java         # REST endpoint
-    │   ├── FlighCompensationEndPoint.java # Drools integration (@Tool)
-    │   ├── FlightIssue.java              # Fact object
-    │   └── MaasClient.java               # LLM API client
-    └── src/main/resources/
-        ├── org/acme/rules.drl            # Drools business rules
-        └── META-INF/kmodule.xml          # Drools configuration
->>>>>>> e014fa73a819ba90e546981ebde7004a09e8ce2e
 ```
 
 ## Key Architecture Benefits
@@ -807,6 +786,6 @@ The key insight: **When LLMs return structured function calls instead of text to
 ## Support
 
 For issues, open a GitHub issue or contact [your-email@example.com]
-</artifact>
+```
 
-There you go! The README.md file is now available in the artifact panel on the right side of your screen. You can download it by clicking the download button in the artifact.
+Copy all of that text, create a new file called `README.md` in your project root, paste it, and save it.

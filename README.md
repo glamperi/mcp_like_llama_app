@@ -4,60 +4,86 @@ An intelligent airline customer service chatbot demonstrating how native functio
 
 ## Architecture Overview
 
+```
+┌─────────────┐
+│   Web UI    │
+│  (Frontend) │
+└──────┬──────┘
+       │ WebSocket
+       ↓
+┌──────────────────────────────────────────────────────────┐
+│                    Backend (Quarkus)                     │
+│                                                          │
+│  ┌─────────────────┐         ┌──────────────────┐      │
+│  │ WebSocketChat   │────────→│  ToolRegistry    │      │
+│  │   Resource      │         │ (@ApplicationScoped)     │
+│  └────────┬────────┘         └─────────┬────────┘      │
+│           │                            │                │
+│           │ 1. Get Tools               │ Scans @Tool   │
+│           │←───────────────────────────┘                │
+│           │                            ↓                │
+│           │                  ┌──────────────────────┐   │
+│           │                  │ FlightCompensation   │   │
+│           │                  │     EndPoint         │   │
+│           │                  │   (@Tool method)     │   │
+│           │                  └──────────┬───────────┘   │
+│           │                            │                │
+│           │ 2. Send Messages + Tools   │ 4. Invoke     │
+│           ↓                            │    via        │
+│  ┌──────────────────┐                 │ Reflection    │
+│  │   MaasClient     │                 ↓                │
+│  │  (@RestClient)   │        ┌─────────────────┐       │
+│  └────────┬─────────┘        │ Drools Engine   │       │
+│           │                  │  (KieSession)   │       │
+└───────────┼──────────────────┴────────┬────────────────┘
+            │                           │
+            │ 3. HTTP POST              │ Evaluate
+            ↓                           ↓
+   ┌─────────────────┐         ┌────────────────┐
+   │   Mistral AI    │         │ compensation   │
+   │      API        │         │     .drl       │
+   │ (mistral-large) │         │  (Rules File)  │
+   └─────────────────┘         └────────────────┘
+            │
+            │ Returns: tool_calls JSON
+            └─→ { "function": "flightCompensation", 
+                  "arguments": "{...}" }
+```
+
+**Flow:**
+1. User sends message via WebSocket
+2. Backend gets tool definitions from ToolRegistry
+3. Backend calls Mistral API with messages + available tools
+4. Mistral returns structured `tool_calls` JSON
+5. Backend invokes tool via reflection (ToolRegistry → FlightCompensationEndPoint)
+6. Drools engine evaluates business rules
+7. Result flows back to user
+
+---
+
+**Mermaid Diagram** (renders on GitHub):
+
 ```mermaid
-graph TB
-    subgraph Frontend["Frontend"]
-        UI[Web UI<br/>index.html]
-        WS[WebSocket Client<br/>wss://websocket-chat]
-    end
-
-    subgraph Route["OpenShift Route Layer"]
-        R[OpenShift Route<br/>drools-quarkus-airline-mistral]
-    end
-
-    subgraph Backend["Backend Application Pod"]
-        subgraph API["API Layer"]
-            WSR[WebSocketChatResource<br/>@WebSocket]
-            REST[ChatRestResource<br/>@Path /chat]
-        end
-
-        subgraph Registry["Tool Discovery & Registry"]
-            TR[ToolRegistry<br/>@ApplicationScoped]
-            TOOLDEF[Tool Definitions]
-        end
-
-        subgraph Logic["Business Logic"]
-            COMP[FlightCompensationEndPoint<br/>@Tool annotation]
-            DROOLS[Drools Rules Engine<br/>KieSession]
-            RULES[compensation.drl<br/>Business Rules]
-        end
-
-        subgraph LLM["External LLM Integration"]
-            CLIENT[MaasClient<br/>@RestClient]
-        end
-    end
-
-    subgraph External["External Services"]
-        MISTRAL[Mistral AI API<br/>mistral-large-latest]
-    end
-
-    UI -->|User messages| WS
-    WS -->|WebSocket| R
-    R --> WSR
+flowchart TB
+    UI[Web UI] -->|WebSocket| WSR[WebSocketChatResource]
     
-    WSR -->|Gets tools from| TR
-    TR -->|Scans @Tool annotations| COMP
-    TR -->|Auto-generates definitions| TOOLDEF
-    TR -->|Invokes via reflection| COMP
+    WSR -->|Get Tools| TR[ToolRegistry]
+    TR -->|Scans| COMP[FlightCompensationEndPoint]
     
-    WSR -->|1. Messages + Tools| CLIENT
-    CLIENT -->|HTTP POST| MISTRAL
-    MISTRAL -->|Structured tool_calls| CLIENT
-    CLIENT -->|2. Returns tool_calls| WSR
-    WSR -->|3. Invoke tool| TR
+    WSR -->|Messages + Tools| CLIENT[MaasClient]
+    CLIENT -->|HTTP| MISTRAL[Mistral AI API]
+    MISTRAL -->|tool_calls JSON| CLIENT
     
-    COMP -->|Creates KieSession| DROOLS
-    DROOLS -->|Evaluates| RULES
+    CLIENT -->|tool_call| WSR
+    WSR -->|Invoke| TR
+    TR -->|Reflection| COMP
+    
+    COMP -->|Execute| DROOLS[Drools Engine]
+    DROOLS -->|Evaluate| RULES[compensation.drl]
+    
+    RULES -->|Result| COMP
+    COMP -->|Result| WSR
+    WSR -->|Response| UI
     
     style TR fill:#e1f5e1
     style COMP fill:#fff3cd

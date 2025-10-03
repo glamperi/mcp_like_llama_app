@@ -63,6 +63,7 @@ graph TB
     style MISTRAL fill:#d1ecf1
 ```
 
+<<<<<<< HEAD
 ## Three Core Components
 
 ### 1. Frontend (Web UI)
@@ -627,6 +628,24 @@ drools-quarkus-airline/
 │   ├── META-INF/resources/index.html      # Frontend UI
 │   └── application.properties             # Configuration
 └── pom.xml                                # Dependencies
+=======
+mcp_like_llama_app/
+├── chatbot-ui/              # Frontend chat interface
+│   ├── index.html           # WebSocket-based chat UI
+│   ├── index-rest.html      # REST-based chat UI  
+│   └── script.js            # WebSocket client logic
+│
+└── drools-quarkus-airline/  # Backend Quarkus application
+    ├── src/main/java/org/acme/
+    │   ├── WebSocketChatResource.java    # WebSocket endpoint
+    │   ├── ChatRestResource.java         # REST endpoint
+    │   ├── FlighCompensationEndPoint.java # Drools integration (@Tool)
+    │   ├── FlightIssue.java              # Fact object
+    │   └── MaasClient.java               # LLM API client
+    └── src/main/resources/
+        ├── org/acme/rules.drl            # Drools business rules
+        └── META-INF/kmodule.xml          # Drools configuration
+>>>>>>> e014fa73a819ba90e546981ebde7004a09e8ce2e
 ```
 
 ## Key Architecture Benefits
